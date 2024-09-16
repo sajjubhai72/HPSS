@@ -48,6 +48,7 @@ if (!empty($_POST["classid1"])) {
                 <input type="hidden" name="subjectid[]" value="<?php echo htmlentities($row['id']); ?>" />
                 <input type="text" name="fullmarks[]" value="" placeholder="Enter Full Marks" class="form-control" required>
                 <input type="text" name="passmarks[]" value="" placeholder="Enter Pass Marks" class="form-control" required>
+                <input type="text" name="pracmarks[]" value="" placeholder="Enter Practical Marks" class="form-control" required>
                 <input type="text" name="obtainedmarks[]" value="" placeholder="Enter Obtained Marks" class="form-control" required>
             </div>
         <?php }

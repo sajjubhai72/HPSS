@@ -1,55 +1,84 @@
 <?php
 session_start();
-error_reporting(E_ALL); // Show all errors
-ini_set('display_errors', 1); // Display errors
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 include('includes/dbconnection.php');
 
-// $stid=intval($_GET['stid']);
+// Check if editid is set in the URL
+if(isset($_GET['editid'])) {
+    $editid = intval($_GET['editid']);
+} else {
+    // Redirect to manage-result.php if editid is not set
+    header("Location: manage-result.php");
+    exit();
+}
+
 if (isset($_POST['submit'])) {
-    $rowid=$_POST['id'];
     $fullmarks = $_POST['fullmarks'];
     $passmarks = $_POST['passmarks'];
+    $pracmarks = $_POST['pracmarks'];
     $obtainedmarks = $_POST['obtainedmarks'];
+    $resultids = $_POST['resultid'];
 
+    // Flag to check if any update failed
+    $updateFailed = false;
 
-    // Flag to check if any insert failed
-    $insertFailed = false;
-
-    // Loop through each subject and insert marks
+    // Loop through each subject and update marks
     for ($i = 0; $i < count($obtainedmarks); $i++) {
         $obt_marks = $obtainedmarks[$i];
         $f_marks = $fullmarks[$i];
+        $pt_marks = $pracmarks[$i];
         $p_marks = $passmarks[$i];
-        $sid = $sid1[$i];
+        $resultid = $resultids[$i];
 
-        // Insert result into database
+        // Update result in database
         $sql = "UPDATE stnresult 
-        SET UpdationDate = NOW(), FullMarks = :fullmarks, PassMarks = :passmarks, ObtainedMarks = :obtainedmarks 
-        WHERE id = :resultid";
+                SET UpdationDate = NOW(), FullMarks = :fullmarks, PassMarks = :passmarks, PracticalMarks=:pracmarks, ObtainedMarks = :obtainedmarks 
+                WHERE id = :resultid";
 
-        // $sql="update tblresult  set marks=:mrks where id=:iid ";
         $query = $dbh->prepare($sql);
         $query->bindParam(':fullmarks', $f_marks, PDO::PARAM_STR);
         $query->bindParam(':passmarks', $p_marks, PDO::PARAM_STR);
+        $query->bindParam(':pracmarks', $pt_marks, PDO::PARAM_STR);
         $query->bindParam(':obtainedmarks', $obt_marks, PDO::PARAM_STR);
+        $query->bindParam(':resultid', $resultid, PDO::PARAM_INT);
         
         if (!$query->execute()) {
-            $insertFailed = true;
+            $updateFailed = true;
+            break;
         }
     }
 
-    // Set success or error message based on insert status
-    if ($insertFailed) {
+    // Set success or error message based on update status
+    if ($updateFailed) {
         $_SESSION['error'] = "Something went wrong. Please try again.";
     } else {
-        $_SESSION['msg'] = "Result info added successfully.";
+        $_SESSION['msg'] = "Result info updated successfully.";
     }
 
     // Redirect to the same page to show message
-    header('Location: ' . $_SERVER['PHP_SELF']);
-    exit;
+    header("Location: editResult.php?editid=" . $editid);
+    exit();
 }
+
+// Fetch student details
+$stmt = $dbh->prepare("SELECT stnstudents.StudentName, stnclasses.ClassName, stnclasses.Section 
+                       FROM stnstudents 
+                       JOIN stnclasses ON stnclasses.id = stnstudents.ClassId 
+                       WHERE stnstudents.id = :editid");
+$stmt->bindParam(':editid', $editid, PDO::PARAM_INT);
+$stmt->execute();
+$studentInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Fetch result details
+$query = $dbh->prepare("SELECT stnresult.id as resultid, stnsubjects.SubjectName, stnresult.FullMarks, stnresult.PassMarks, stnresult.PracticalMarks, stnresult.ObtainedMarks
+                        FROM stnresult 
+                        JOIN stnsubjects ON stnsubjects.id = stnresult.SubjectId 
+                        WHERE stnresult.StudentId = :editid");
+$query->bindParam(':editid', $editid, PDO::PARAM_INT);
+$query->execute();
+$results = $query->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -97,67 +126,44 @@ if (isset($_POST['submit'])) {
         </div>
 
         <div class="content mt-3">
-            <div class="animated fadeIn">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-header"><strong>Result</strong><small> Detail</small></div>
+        <div class="animated fadeIn">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header"><strong>Edit Result</strong></div>
+                        <div class="card-body card-block">
+                            <?php
+                            if(isset($_SESSION['error'])) {
+                                echo "<div class='alert alert-danger'>" . $_SESSION['error'] . "</div>";
+                                unset($_SESSION['error']);
+                            }
+                            if(isset($_SESSION['msg'])) {
+                                echo "<div class='alert alert-success'>" . $_SESSION['msg'] . "</div>";
+                                unset($_SESSION['msg']);
+                            }
+                            ?>
                             <form method="post" action="">
-
-
-                                <div class="card-body card-block">
-                                <?php 
-
-$ret = "SELECT stnstudents.StudentName, stnclasses.ClassName, stnclasses.Section from stnresult join stnstudents on stnresult.id=stnresult.StudentId join stnsubjects on stnsubjects.id=stnresult.SubjectId join stnclasses on stnclasses.id=stnstudents.ClassId where stnstudents.id=:stid limit 1";
-$stmt = $dbh->prepare($ret);
-$stmt->bindParam(':stid',$stid,PDO::PARAM_STR);
-$stmt->execute();
-$result=$stmt->fetchAll(PDO::FETCH_OBJ);
-$cnt=1;
-if($stmt->rowCount() > 0)
-{
-foreach($result as $row)
-{  ?>
-                                    <div class="form-group">
-                                        <label for="classname" class="form-control-label">Student Name</label>
-                                        <input type="text" name="classname" value="<?php echo htmlentities($row->StudentName);?>" class="form-control" id="classname" onChange>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="classnumeric" class="form-control-label">Class Name</label>
-                                        <input type="text" name="classnumeric" value="<?php echo htmlentities($row->StudentName);?>" class="form-control" id="classnumeric" onChange>
-                                    </div>
-                                    <?php } }?>
-
-                                    <?php 
-$sql = "SELECT distinct stnstudents.StudentName, stnstudents.id, stnclasses.ClassName, stnclasses.Section, stnsubjects.SubjectName, stnresult.FullMarks, stnresult.PassMarks, stnresult.ObtainedMarks, stnresult.id as resultid from stnresult join stnstudents on stnstudents.id=stnresult.StudentId join stnsubjects on stnsubjects.id=stnresult.SubjectId join stnclasses on stnclasses.id=stnstudents.ClassId where stnstudents.id=:stid ";
-$query = $dbh->prepare($sql);
-$query->bindParam(':stid',$stid,PDO::PARAM_STR);
-$query->execute();
-$results=$query->fetchAll(PDO::FETCH_OBJ);
-$cnt=1;
-if($query->rowCount() > 0)
-{
-foreach($results as $result)
-{  ?>
-
-                                    <div class="form-group">
-                                        <label for="section" class="form-control-label">Section</label>
-                                        <input type="hidden" name="subjectid[]" value="<?php echo htmlentities($row['id']); ?>" />
-                                        <input type="text" name="fullmarks[]" value="<?php echo htmlentities($result->FullMarks)?>" placeholder="Enter Full Marks" class="form-control" required>
-                                        <input type="text" name="passmarks[]" value="<?php echo htmlentities($result->PassMarks)?>" placeholder="Enter Pass Marks" class="form-control" required>
-                                        <input type="text" name="obtainedmarks[]" value="<?php echo htmlentities($result->ObtainedMarks)?>" placeholder="Enter Obtained Marks" class="form-control" required>
-                                    </div>
-
-                                    <?php } }?>
-
+                                <div class="form-group">
+                                    <label><strong>Student Name:</strong> <?php echo htmlspecialchars($studentInfo['StudentName']); ?></label>
                                 </div>
-                                <div class="card-footer">
-                                    <p style="text-align: center;">
-                                        <button type="submit" class="btn btn-primary btn-sm" name="submit" id="submit">
-                                            <i class="fa fa-dot-circle-o"></i> Update
-                                        </button>
-                                    </p>
+                                <div class="form-group">
+                                    <label><strong>Class:</strong> <?php echo htmlspecialchars($studentInfo['ClassName']); ?> (<?php echo htmlspecialchars($studentInfo['Section']); ?>)</label>
+                                </div>
+
+                                <?php foreach ($results as $result): ?>
+    <div class="form-group">
+        <label><strong><?php echo htmlspecialchars($result['SubjectName']); ?></strong></label>
+        <input type="hidden" name="resultid[]" value="<?php echo $result['resultid']; ?>"><br>
+        Full Marks: <input type="text" name="fullmarks[]" value="<?php echo htmlspecialchars($result['FullMarks']); ?>" class="form-control" required><br>
+        Pass Marks: <input type="text" name="passmarks[]" value="<?php echo htmlspecialchars($result['PassMarks']); ?>" class="form-control" required><br>
+        Practical Marks: <input type="text" name="pracmarks[]" value="<?php echo htmlspecialchars($result['PracticalMarks']); ?>" class="form-control" required><br>
+        Obtained Marks: <input type="text" name="obtainedmarks[]" value="<?php echo htmlspecialchars($result['ObtainedMarks']); ?>" class="form-control" required><br>
+    </div>
+<?php endforeach; ?>
+
+
+                                <div class="form-group">
+                                    <button type="submit" name="submit" class="btn btn-primary">Update Result</button>
                                 </div>
                             </form>
                         </div>

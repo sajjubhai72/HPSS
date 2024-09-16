@@ -110,6 +110,7 @@ if (isset($_GET['delid'])) {
             <th>Gender</th>
             <th>Date of Birth</th>
             <th>Class & Section</th>
+            <th>Registration No.</th>
             <th>Exam Year</th>
             <th>Examination Terms</th>
             <th>Registered Date</th>
@@ -138,12 +139,13 @@ if (isset($_GET['delid'])) {
             <td><?php echo htmlentities($result->Gender); ?></td>
             <td><?php echo htmlentities($result->DOB); ?></td>
             <td><?php echo htmlentities($result->ClassName . " Section-(" . $result->Section . ")"); ?></td>
+            <td><?php echo htmlentities($result->RegNo); ?></td>
             <td><?php echo htmlentities($result->ExamYear); ?></td>
             <td><?php echo htmlentities($result->ExaminationTerms); ?></td>
             <td><?php echo htmlentities($result->RegDate); ?></td>
             <td><?php echo htmlentities($result->Status == 0 ? 'Inactive' : 'Active'); ?></td>
             <td>
-            <a href="editStudent.php?editid=<?php echo htmlentities ($row->id);?>" class="btn btn-primary">Edit</a>
+            <a href="editStudent.php?editid=<?php echo htmlentities ($result->id);?>" class="btn btn-primary">Edit</a>
     <a href="manage-student.php?delid=<?php echo htmlentities($result->id); ?>" class="btn btn-danger" onclick="return confirm('Do you really want to delete?');">Delete</a>
 </td>
 

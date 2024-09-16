@@ -65,7 +65,7 @@
             <div class="list-group">       	
               <a href="./index.php" class="list-group-item ">Home</a>
               <a href="./notice.php" class="list-group-item ">Notice Board </a>
-               <a href="./results.html" class="list-group-item "></i>Check Results</a>
+               <a href="./checkResults.html" class="list-group-item "></i>Check Results</a>
                <a href="./admission.php" class="list-group-item ">Process Your Admission</a>
                <a href="./teacher.php" class="list-group-item ">Our Teachers | शिक्षकहरु</a>
                <a href="./exam-nir.php" class="list-group-item "></i>परीक्षा निर्देशिका</a>

@@ -10,6 +10,7 @@ if (isset($_POST['submit'])) {
     $studentid = $_POST['studentid']; 
     $fullmarks = $_POST['fullmarks'];
     $passmarks = $_POST['passmarks'];
+    $pracmarks = $_POST['pracmarks'];
     $obtainedmarks = $_POST['obtainedmarks'];
 
     // Fetch subjects for the selected class
@@ -30,25 +31,28 @@ if (isset($_POST['submit'])) {
     for ($i = 0; $i < count($obtainedmarks); $i++) {
         $obt_marks = $obtainedmarks[$i];
         $f_marks = $fullmarks[$i];
+        $pt_marks = $pracmarks[$i];
         $p_marks = $passmarks[$i];
         $sid = $sid1[$i];
-
+    
         // Insert result into database
-        $sql = "INSERT INTO stnresult (PostingDate,StudentId, ClassId, SubjectId, FullMarks, PassMarks, ObtainedMarks) 
-                VALUES (NOW(), :studentid, :class, :sid, :fullmarks, :passmarks, :obtainedmarks)";
-
+        $sql = "INSERT INTO stnresult (PostingDate, StudentId, ClassId, SubjectId, FullMarks, PassMarks, PracticalMarks, ObtainedMarks) 
+                VALUES (NOW(), :studentid, :class, :sid, :fullmarks, :passmarks, :pracmarks, :obtainedmarks)";
+    
         $query = $dbh->prepare($sql);
         $query->bindParam(':studentid', $studentid, PDO::PARAM_STR);
         $query->bindParam(':class', $class, PDO::PARAM_STR);
         $query->bindParam(':sid', $sid, PDO::PARAM_STR);
         $query->bindParam(':fullmarks', $f_marks, PDO::PARAM_STR);
         $query->bindParam(':passmarks', $p_marks, PDO::PARAM_STR);
+        $query->bindParam(':pracmarks', $pt_marks, PDO::PARAM_STR);
         $query->bindParam(':obtainedmarks', $obt_marks, PDO::PARAM_STR);
-        
+    
         if (!$query->execute()) {
             $insertFailed = true;
         }
     }
+    
 
     // Set success or error message based on insert status
     if ($insertFailed) {

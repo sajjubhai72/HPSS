@@ -15,14 +15,15 @@ if (strlen($_SESSION['trmsaid']) == 0) {
         $DOB = $_POST['dob'];
         $ClassId = $_POST['classname'];
         $FatherName = $_POST['fathername'];
+        $RegNo = $_POST['regno'];
         $ExamYear = $_POST['examyear'];
         $ExaminationTerms = $_POST['exterms'];
         $status = 1;
 
         try {
             // SQL query for insertion
-            $sql = "INSERT INTO stnstudents (RegDate, StudentName, RollId, StudentEmail, Gender, DOB, ClassId, FatherName, ExamYear, ExaminationTerms, Status) 
-                    VALUES (NOW(), :fullname, :rollno, :email, :gender, :dob, :classname, :fathername, :examyear, :exterms, :status)";
+            $sql = "INSERT INTO stnstudents (RegDate, StudentName, RollId, StudentEmail, Gender, DOB, ClassId, FatherName, ExamYear, ExaminationTerms, RegNo, Status) 
+                    VALUES (NOW(), :fullname, :rollno, :email, :gender, :dob, :classname, :fathername, :examyear, :exterms, :regno, :status)";
             
             $query = $dbh->prepare($sql);
             $query->bindParam(':fullname', $StudentName, PDO::PARAM_STR);
@@ -33,6 +34,7 @@ if (strlen($_SESSION['trmsaid']) == 0) {
             $query->bindParam(':classname', $ClassId, PDO::PARAM_STR);
             $query->bindParam(':fathername', $FatherName, PDO::PARAM_STR);
             $query->bindParam(':examyear', $ExamYear, PDO::PARAM_STR);
+            $query->bindParam(':regno', $RegNo, PDO::PARAM_STR);
             $query->bindParam(':exterms', $ExaminationTerms, PDO::PARAM_STR);
             $query->bindParam(':status', $status, PDO::PARAM_STR);
 
@@ -147,6 +149,10 @@ if (strlen($_SESSION['trmsaid']) == 0) {
                                         <label for="dob" class="form-control-label">Date of Birth</label>
                                         <input type="text" id="dob" name="dob" placeholder="YYYY-MM-DD" pattern="\d{4}-\d{2}-\d{2}" class="form-control" required>
                                         <small id="dobError" style="color:red; display:none;">Please enter a valid date in YYYY-MM-DD format.</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="regno" class="form-control-label">Registration No.</label>
+                                        <input type="text" name="regno" placeholder="eg. 2480" class="form-control" required>
                                     </div>
                                     <div class="form-group">
                                         <label for="examyear" class="form-control-label">Exam Year</label>
