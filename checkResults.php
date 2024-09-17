@@ -74,29 +74,32 @@ include('conn.php');?>
     </div>
     <div class="form_jumbotron">
        <div class="col-lg-12" style="margin-top:20px;">
-            <form name="frmCheckResults" id="frmCheckResults" action="./Dashboard/results/result.php" method="post" target="_blank" autocomplete="off">
+            <form name="frmCheckResults" id="frmCheckResults" action="./Dashboard/results/result.php" method="GET" target="_blank" autocomplete="off">
                 <div class="row" >
                     <label for="" class="col-lg-3 control-label">Examination Year:</label>
                     <div class="col-lg-3">
                         <select required name="examyear" id="src_year" class="form-control">
                             <option value="">-- Select --</option>
                             <option value="2081" >2081</option>
+                            <option value="2080" >2080</option>
                         </select>
                     </div>
                 </div><br />
                 <div class="row">
                     <label for="" class="col-lg-3 control-label">Exam Terms :</label>
                     <div class="col-lg-3">
-                        <select  name="examterms" id="src_level" class="form-control" required>
+                        <select name="examterms" id="src_level" class="form-control" required>
                             <option value="">-- Select --</option>
-                            <option value="2">Pre-diploma</option>
+                            <option value="1st Term">1st Term</option>
+                            <option value="2nd Term">2nd Term</option>
+                            <option value="Final">Final</option>
                         </select>
                     </div>
                 </div><br/>
                 <div class="row">
                     <label for="" class="col-lg-3 control-label" >Roll No. :</label>
                     <div class="col-lg-5" >
-                        <input type="text" name="rollno" id="exam_symbol_number" class="form-control" placeholder="e.g. 1000234" required >
+                        <input type="number" name="rollid" id="rollid" class="form-control" placeholder="e.g. 1000234" required >
                     </div>
                 </div><br />
                 <div class="row">

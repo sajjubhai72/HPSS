@@ -1,3 +1,69 @@
+<?php 
+include('includes/dbconnection.php');
+
+// Fetching data from the URL (sent from checkResult.php)
+$rollid = $_GET['rollid'];
+$dob = $_GET['dob'];
+$examyear = $_GET['examyear'];
+$examterms = $_GET['examterms'];
+
+// Prepare and execute query for fetching student details based on the provided criteria
+$sql_student = "SELECT stnstudents.*, stnclasses.ClassName, stnclasses.Section 
+                FROM stnstudents
+                JOIN stnclasses ON stnstudents.ClassId = stnclasses.id
+                WHERE RollId = :rollid 
+                AND DOB = :dob 
+                AND ExamYear = :examyear 
+                AND ExaminationTerms = :examterms";
+
+
+$stmt = $dbh->prepare($sql_student);
+$stmt->bindParam(':rollid', $rollid, PDO::PARAM_STR);
+$stmt->bindParam(':dob', $dob, PDO::PARAM_STR);
+$stmt->bindParam(':examyear', $examyear, PDO::PARAM_STR);
+$stmt->bindParam(':examterms', $examterms, PDO::PARAM_STR);
+$stmt->execute();
+$student = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Check if the student exists
+if (!$student) {
+    echo '
+    <style>
+        .error-container {
+            display: flex;
+            margin-top: 35px;
+            justify-content: center;
+            // align-items: center;
+            height: 10vh; /* Full height */
+        }
+        .error-message {
+            border: 2px solid black;
+            padding: 20px;
+            text-align: center;
+            font-size: 30px;
+            color: red;
+            // background-color: #ffe6e6;
+        }
+    </style>
+    <div class="error-container">
+        <div class="error-message">
+            Sorry! No Record Found !!!
+        </div>
+    </div>';
+    exit();
+}
+
+// Fetch the results
+$sql_result = "
+    SELECT stnsubjects.SubjectName, stnresult.FullMarks, stnresult.PassMarks, stnresult.ObtainedMarks, stnresult.PracticalMarks
+    FROM stnresult
+    JOIN stnsubjects ON stnresult.SubjectId = stnsubjects.id
+    WHERE stnresult.StudentId = :studentid";
+$stmt_result = $dbh->prepare($sql_result);
+$stmt_result->bindParam(':studentid', $student['id'], PDO::PARAM_INT);
+$stmt_result->execute();
+$results = $stmt_result->fetchAll(PDO::FETCH_ASSOC);
+?>
 
 
 <!DOCTYPE html>
@@ -73,119 +139,88 @@
             <h4 align="center" style="margin: 0px;padding-bottom: 10px;">School Level Certificate</h4>
         </div>
     <div>
-    <div style="text-align:center;font-size:24px;line-height:40px;vertical-align:middle;background-color:#cccccc;width:100%">
-        <span style="text-transform:uppercase" ><strong>Mark sheet</strong></span>
+    <div style="text-align:center; font-size:15px; line-height:5px; padding-top:1px; background-color:#EDF3F8; width:100%; height: 15vh;">
+        <span style="text-transform:uppercase" >
+        <h4>Hilal Public Sec. School</h4>
+                  <h3>Controller of Examinations</h3>
+                  <h5>Harinagar-7, Sunsari</h5>
+                  <strong>[Estd: 2052]</strong>
+    </span>
     </div>
-    <div style="float:left;  margin-top:20px;">
-    <?php
-    $examYear=$_POST['examyear'];
-    $classid=$_POST['examterms'];
-    $rollid=$_POST['rollno'];
-    $DOB=$_POST['dob']; 
-    $_SESSION['examyear']=$examYear;
-    $_SESSION['examterms']=$classid;
-    $_SESSION['rollno']=$rollid;
-    $_SESSION['dob']=$DOB;
-    $qery = "SELECT   stnstudents.StudentName,stnstudents.DOB,stnstudents.RollId,stnstudents.RegDate,stnstudents.StudentId,stnstudents.Status,stnclasses.ClassName,stnclasses.Section from stnstudents join stnclasses on stnclasses.id=stnstudents.ClassId where stnstudents.RollId=:rollid and stnstudents.ClassId=:classid ";
-    $stmt = $dbh->prepare($qery);
-    $stmt->bindParam(':examyear',$examYear,PDO::PARAM_STR);
-    $stmt->bindParam(':examterms',$classid,PDO::PARAM_STR);
-    $stmt->bindParam(':rollno',$rollid,PDO::PARAM_STR);
-    $stmt->bindParam(':dob',$DOB,PDO::PARAM_STR);
-    $stmt->execute();
-    $resultss=$stmt->fetchAll(PDO::FETCH_OBJ);
-    $cnt=1;
-    if($stmt->rowCount() > 0)
-    {
-    foreach($resultss as $row)
-    {   ?>
-        <table width="100%" border="0" style="border:!important;">
-            <tr>
-                <td width="55%">Name of the Student : <?php echo htmlentities($row->StudentName);?></td>
-                <td>Registration No : <?php echo htmlentities($row->RegNo);?></td>
-            </tr>
-            <tr>
-                <td>Father's Name : <?php echo htmlentities($row->FatherName);?></td>
-                <td>Roll No. : <?php echo htmlentities($row->RollId);?> (<?php echo htmlentities($row->StudentName);?>)</td>
-            </tr>
-            <tr>
-                <td>Grade : <?php echo htmlentities($row->ClassName);?> (<?php echo htmlentities($row->Section);?>)</td>
-                <td>Examination Held in Year : <?php echo htmlentities($row->ExamYear);?></td>
-            </tr>
-        </table>
-        <table width="100%"border="0" class="table_name" style="margin-top:10px; border-collapse: collapse;">
-            <tr>
-                <td height="25" colspan="9" align="center" style="font-size:24px; border: 1px solid black;"><strong><?php echo htmlentities($row->ExaminationTerms);?></strong></td>
-                <?php } ?>
-            </tr>
-            <tr>
-                <th rowspan="2" style="border: 1px solid black;">S.N.</th>
-                <th rowspan="2" style="border: 1px solid black;">Subject</th>
-                <th rowspan="2" style="border: 1px solid black;">Full Mark</th>
-                <th rowspan="2" style="border: 1px solid black;">Pass Mark</th>
-                <th width="130px" colspan="2" style="border: 1px solid black;">Marks Obtained</th>
-                <th style="border: 1px solid black;" width="55">Total</th>
-            </tr>
-            <tr align="center">
-                <th style="border: 1px solid black;" width="55">Int.</th>
-                <th style="border: 1px solid black;" width="55">Ext.</th>
-                <th style="border: 1px solid black;">&nbsp;</th>
-            </tr>
-            <tr>
-            <?php                                              
-                                                        // Code for result
+    <div style="float:left;  margin-top:13px; font-size:18px;">
+        <table width="100%" border="0">
+                <tr>
+                    <td width="55%">Name of the Student: <?= htmlspecialchars($student['StudentName']) ?></td>
+                    <td>Registration No: <?= htmlspecialchars($student['RegNo']) ?></td>
+                </tr>
+                <tr>
+                    <td>Father's Name: <?= htmlspecialchars($student['FatherName']) ?></td>
+                    <td>Roll No.: <?= htmlspecialchars($student['RollId']) ?></td>
+                </tr>
+                <tr>
+                    <td>Grade: <?= htmlspecialchars($student['ClassName']) ?> (<?= htmlspecialchars($student['Section']) ?>)</td>
+                    <td>Examination Held in Year: <?= htmlspecialchars($student['ExamYear']) ?></td>
+                </tr>
+                <tr>
+                    <td>Date of Birth: <?= htmlspecialchars($student['DOB']) ?></td>
+                    <td>Issues Date: <?= htmlspecialchars($student['RegDate']) ?></td>
+                </tr>
+            </table>
+        <table width="100%" border="0" class="table_name" style="margin-top:10px; border-collapse: collapse;">
+    <tr>
+        <td height="27" colspan="7" align="center" style="font-size:24px; border: 1px solid black;"><strong><?php echo htmlspecialchars($student['ExaminationTerms']); ?></strong></td>
+    </tr>
+    <tr>
+        <th rowspan="2" style="border: 1px solid black;">S.N.</th>
+        <th rowspan="2" style="border: 1px solid black;" width="400">Subject</th>
+        <th rowspan="2" style="border: 1px solid black;">Full Mark</th>
+        <th rowspan="2" style="border: 1px solid black;">Pass Mark</th>
+        <th width="130px" colspan="2" style="border: 1px solid black;">Marks Obtained</th>
+        <th style="border: 1px solid black;" width="55">Total</th>
+    </tr>
+    <tr align="center">
+        <th style="border: 1px solid black;" width="55">TH.</th>
+        <th style="border: 1px solid black;" width="55">PR.</th>
+        <th style="border: 1px solid black;">&nbsp;</th>
+    </tr>
+    <?php 
+    $sn = 1;
+    $grandTotal = 0;
+    $grandFullMarks = 0;
+    $grandPassMarks = 0;
+    $grandObtainedMarks = 0;
+    $grandPracticalMarks = 0;
 
-                                                        $query ="select t.StudentName,t.RollId,t.ClassId,t.marks,SubjectId,stnsubjects.SubjectName from (select sts.StudentName,sts.RollId,sts.ClassId,tr.marks,SubjectId from stnstudents as sts join  stnresult as tr on tr.StudentId=sts.StudentId) as t join stnsubjects on stnsubjects.id=t.SubjectId where (t.RollId=:rollid and t.ClassId=:classid)";
-                                                        $query= $dbh -> prepare($query);
-                                                        $stmt->bindParam(':examyear',$examYear,PDO::PARAM_STR);
-    $stmt->bindParam(':examterms',$classid,PDO::PARAM_STR);
-    $stmt->bindParam(':rollno',$rollid,PDO::PARAM_STR);
-    $stmt->bindParam(':dob',$DOB,PDO::PARAM_STR);
-                                                        $query-> execute();  
-                                                        $results = $query -> fetchAll(PDO::FETCH_OBJ);
-                                                        $cnt=1;
-                                                        if($countrow=$query->rowCount()>0)
-                                                        { 
-
-                                                        foreach($results as $result){
-
-                                                        ?>
-                                <td height="35" style="border: 0.9px solid black; padding:10px;"  ><?php echo htmlentities($cnt);?></td>
-                                <td  style="border: 0.9px solid black;padding:5px;" ><?php echo htmlentities($result->SubjectName);?></td>
-                                
-                                <td style="border: 0.5px solid black;" align="center"><?php echo htmlentities($result->FullMarks);?></td>
-                                
-                                <td style="border: 0.5px solid black;" align="center"><?php echo htmlentities($result->PassMarks);?></td>
-
-                                <td style="border: 0.5px solid black;" align="center"><?php echo htmlentities($result->PracticalMarks);?></td>
-
-                                <?php
-                                $oMarks = $result->ObtainedMarks;
-                                $pmarks = $result->PassMarks;
-                                $failColor = ($Marks < $pmarks) ? 'background-color: #7e7c87; color: white;' : '';
-                                ?>
-                                <td style="<?php echo $failColor; ?>"><?php echo htmlentities($oMarks); ?></td>
-                                <?php 
-                                $ptMarks = $result->PracticalMarks;
-                                $totlcount = $oMarks + $ptMarks;
-                                ?>
-                                <td style="border: 0.5px solid black;" align="center"><?php echo htmlentities($totlcount); ?></td>
-                            </tr>
-                            <tr>
-                                <?php
-                                $fmarks = $result->FullMarks;
-                                ?>
-                                <td height="29" colspan="2"  style="border: 0.9px solid black;" align="right"><strong>Grand Total&nbsp;</strong></td>
-                                <th style="border: 0.5px solid black;" align="center"><?php $outof = (($cnt-1)*$fmarks); ?></th>
-                                <th style="border: 0.5px solid black;" align="center"><?php (($cnt-1)*$pmarks); ?></th>
-                                <th style="border: 0.5px solid black;" align="center"><?php (($cnt-1)*$ptMarks); ?></th>
-                                <th style="border: 0.5px solid black;" align="center"><?php $totObtain = (($cnt-1)*$oMarks); ?></th>
-                                <?php 
-                                $totlnumber += $totlcount;
-                                $cnt++;}?>
-                                <td align="center"  style="border: 0.9px solid black;"><?php echo htmlentities($totlnumber); ?></td>
-                            </tr>
-                        </table>
+    foreach ($results as $result) { 
+        $totalMarks = $result['ObtainedMarks'] + $result['PracticalMarks'];
+        $grandTotal += $totalMarks;
+        $grandFullMarks += $result['FullMarks'];
+        $grandPassMarks += $result['PassMarks'];
+        $grandObtainedMarks += $result['ObtainedMarks'];
+        $grandPracticalMarks += $result['PracticalMarks'];
+    ?>
+    <tr>
+        <td height="23" style="border: 0.9px solid black; padding:10px;"><?php echo $sn; ?></td>
+        <td style="border: 0.9px solid black; padding-left: 10px"><?php echo htmlspecialchars($result['SubjectName']); ?></td>
+        <td style="border: 0.5px solid black;" align="center"><?php echo htmlspecialchars($result['FullMarks']); ?></td>
+        <td style="border: 0.5px solid black;" align="center"><?php echo htmlspecialchars($result['PassMarks']); ?></td>
+        <td style="border: 0.5px solid black;" align="center"><?php echo htmlspecialchars($result['ObtainedMarks']); ?></td>
+        <td style="border: 0.5px solid black;" align="center"><?php echo htmlspecialchars($result['PracticalMarks']); ?></td>
+        <td style="border: 0.5px solid black;" align="center"><?php echo $totalMarks; ?></td>
+    </tr>
+    <?php 
+        $sn++;
+    } 
+    ?>
+    <tr>
+        <td height="29" colspan="2" style="border: 0.9px solid black;" align="right"><strong>Grand Total&nbsp;</strong></td>
+        <th style="border: 0.5px solid black;" align="center"><?php echo $grandFullMarks; ?></th>
+        <th style="border: 0.5px solid black;" align="center"><?php echo $grandPassMarks; ?></th>
+        <th style="border: 0.5px solid black;" align="center"><?php echo $grandObtainedMarks; ?></th>
+        <th style="border: 0.5px solid black;" align="center"><?php echo $grandPracticalMarks; ?></th>
+        <td align="center" style="border: 0.9px solid black;"><?php echo $grandTotal; ?></td>
+    </tr>
+</table>
                         
 
                         <table width="100%" border="0" style="margin-top:20px;">
@@ -195,60 +230,46 @@
                                     CL=Cancelled<br/>
                                     NQ=Not Qualified<br/>
                                     Th.=Theory<br/>
-                                    Pr.=Practical<br/>
-                                    Int.= Internal<br/>
-                                    Ext.=External<br/> <br/><br/>
+                                    Pr.=Practical<br/> <br/><br/>
                                 </td>
 
                                 <td width="44%" style="float:right;">
-                                    Result:<strong><?php
-    // Check if any subject has marks less than 40
-    $failed = false;
-    foreach ($results as $result) {
-        if ($result->ObtainedMarks < $pmarks) {
-            $failed = true;
-            break; // No need to check further once failed is detected
-        }
-    }
+            <?php
+            $totalMarks = $grandFullMarks;
+            $obtainedMarks = $grandTotal;
+            $percentage = ($obtainedMarks / $totalMarks) * 100;
+            $result = ($percentage >= 40) ? 'Pass' : 'Fail';
 
-    // Display result based on the failed flag
-    if ($failed) {
-        echo 'Failed';
-    } else {
-        echo 'Passed';
-    }
-    ?></strong><br/><br/>
-                                    Percentage:<?php echo  htmlentities($totlnumber*(100)/$outof); ?>%<br/><br/>
-                                    Division : <?php
-                                                            // Determine division based on percentage
-                                                            if (($totlnumber*(100)/$outof) >= 80) {
-                                                                echo 'Distinction';
-                                                            } elseif (($totlnumber*(100)/$outof) >= 60) {
-                                                                echo 'First Division';
-                                                            } elseif (($totlnumber*(100)/$outof) >= 45) {
-                                                                echo 'Second Division';
-                                                            } elseif (($totlnumber*(100)/$outof) >=32) {
-                                                                echo 'Third Division';
-                                                            }else {
-                                                                echo 'Not Found Division';
-                                                            }
-                                                            ?>                                            
-                                </td>
+            if ($percentage >= 80) {
+                $division = 'Distinction';
+            } elseif ($percentage >= 60) {
+                $division = '1st division';
+            } elseif ($percentage >= 45) {
+                $division = '2nd division';
+            } elseif ($percentage >= 40) {
+                $division = '3rd division';
+            } else {
+                $division = 'Fail';
+            }
+            ?>
+            Result: <strong><?php echo $result; ?></strong><br/><br/>
+            Percentage: <?php echo number_format($percentage, 2); ?>%<br/><br/>
+            Division: <?php echo $division; ?>
+        </td>
                             </tr>
 
                             
-                            <tr><td colspan="2"><span style="font-size: 13px;font-weight: bold"> <br/>NOTE: This is not for official use. If any mistakes on the marksheet, it will be corrected according to the original record of CTEVT, the Office of the Controller of Examinations.</span></td></tr>
+                            <tr><td colspan="2"><span style="font-size: 13px;font-weight: bold"> <br/>NOTE: This is not for official use. If any mistakes on the marksheet, it will be corrected according to the original record of HPSS, the Controller of Examinations.</span></td></tr>
                             </tr>
-                        </table> 
-                        <?php } } ?>                       
+                        </table>                     
 
                     </div>
 
                     
                     <div  class="header_1" style="padding-top:10px; float: right;">
                         <div id="print_holder">
-                                <button class="btn btn-primary btn-lg " id="print_btn" >Print</button>
-                                <a href="#" class="btn btn-primary btn-lg download" id="download_btn" >Download</a>
+                                <button class="btn btn-primary btn-lg " id="print_btn" >Download</button>
+                                
                         </div>
                     </div>
                     
@@ -274,8 +295,8 @@
         });
     });
 </script>
+
             
             
 </body>
 </html>
-
